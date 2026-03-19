@@ -1,0 +1,10 @@
+.session-timer {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.session-timer-empty {
+  color: #9ca3af;
+}

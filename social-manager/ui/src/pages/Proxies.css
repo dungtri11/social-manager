@@ -1,0 +1,27 @@
+.proxies-page h1 {
+  margin: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-row .form-group.small {
+  flex: 0 0 120px;
+}
+
+.proxies-list {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.proxies-list table {
+  margin: 0;
+}

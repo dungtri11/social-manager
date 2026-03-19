@@ -1,0 +1,24 @@
+.session-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.session-logged-in {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.session-expired {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.session-logged-out {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}

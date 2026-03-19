@@ -1,0 +1,235 @@
+.jobs-page h1 {
+  margin-bottom: 1.5rem;
+}
+
+.stats-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+}
+
+.stat .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat .label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.stat.error .value {
+  color: #dc2626;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: 0.625rem 1rem;
+  border: none;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab:hover {
+  background: #f3f4f6;
+}
+
+.tab.active {
+  background: #4f46e5;
+  color: white;
+}
+
+.tab .count {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.jobs-list {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.jobs-list table {
+  margin: 0;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.truncate {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.like {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge.comment {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.badge.share {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.badge.follow {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 0.8rem;
+}
+
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: #888;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+  background-color: #f9fafb !important;
+}
+
+.progress-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.mini-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #6366f1);
+  border-radius: 2px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Inline logs styling */
+.logs-inline {
+  max-width: 400px;
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  background: #f9fafb;
+  border-radius: 4px;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.logs-inline::-webkit-scrollbar {
+  width: 4px;
+}
+
+.logs-inline::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.logs-inline::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2px;
+}
+
+.logs-inline::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.no-logs-inline {
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.log-entry-inline {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 3px;
+  background: white;
+}
+
+.log-entry-inline:last-child {
+  margin-bottom: 0;
+}
+
+.log-time-inline {
+  color: #6b7280;
+  font-family: monospace;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.log-message-inline {
+  color: #374151;
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
