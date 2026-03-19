@@ -14,34 +14,48 @@ export function Jobs() {
 
   useEffect(() => {
     loadStats();
-    const interval = setInterval(loadStats, 5000);
+    const interval = setInterval(loadStats, 10000); // Reduced frequency: 10s
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     loadJobs(activeTab);
-    const interval = setInterval(() => loadJobs(activeTab), 3000); // Refresh jobs list
+    // Only poll active/waiting tabs frequently; completed/failed rarely change
+    const pollInterval = (activeTab === 'waiting' || activeTab === 'active') ? 5000 : 30000;
+    const interval = setInterval(() => loadJobs(activeTab), pollInterval);
     return () => clearInterval(interval);
   }, [activeTab]);
 
   async function loadStats() {
     try {
       const res = await jobsApi.getStats();
-      setStats(res.stats);
+      // Only update if stats actually changed
+      setStats((prev) => {
+        if (!prev || JSON.stringify(prev) !== JSON.stringify(res.stats)) {
+          return res.stats;
+        }
+        return prev;
+      });
     } catch (err) {
       console.error('Failed to load stats:', err);
     }
   }
 
   async function loadJobs(status: JobStatus) {
-    setLoading(true);
     try {
       const res = await jobsApi.getByStatus(status);
-      setJobs(res.jobs);
+      // Only update if jobs actually changed
+      setJobs((prev) => {
+        const hasChanged = JSON.stringify(prev) !== JSON.stringify(res.jobs);
+        if (hasChanged) {
+          setLoading(false);
+          return res.jobs;
+        }
+        return prev;
+      });
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load jobs');
-    } finally {
       setLoading(false);
     }
   }
