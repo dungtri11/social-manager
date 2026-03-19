@@ -448,9 +448,9 @@ class RiskControlService {
     }
 
     if (cooldownCheck.shouldWait) {
-      safe = false;
+      // Don't set safe = false for cooldowns - let the worker wait instead
       const waitMinutes = Math.ceil(cooldownCheck.waitTime / 1000 / 60);
-      recommendations.push(`Wait ${waitMinutes} minute(s) before next action`);
+      recommendations.push(`Cooldown: wait ${waitMinutes} minute(s) before next action`);
     }
 
     if (safe) {
