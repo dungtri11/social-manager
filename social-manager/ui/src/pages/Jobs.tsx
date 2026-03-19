@@ -65,9 +65,18 @@ export function Jobs() {
     return new Date(timestamp).toLocaleString();
   }
 
-  function formatLogTime(timestamp: number) {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString();
+  function formatLogTime(timestamp: number | undefined) {
+    if (!timestamp) return '-';
+    try {
+      const date = new Date(timestamp);
+      // Check for Invalid Date
+      if (isNaN(date.getTime())) {
+        return `[Invalid: ${timestamp}]`;
+      }
+      return date.toLocaleTimeString();
+    } catch (e) {
+      return `[Error parsing: ${timestamp}]`;
+    }
   }
 
   function getProgressPercentage(job: Job) {
@@ -193,8 +202,7 @@ export function Jobs() {
                         ) : (
                           getRecentLogs(job).map((log, index) => (
                             <div key={index} className="log-entry-inline">
-                              <span className="log-time-inline">{formatLogTime(log.timestamp)}</span>
-                              <span className="log-message-inline">{log.message}</span>
+                              <span className="log-message-inline">{log}</span>
                             </div>
                           ))
                         )}

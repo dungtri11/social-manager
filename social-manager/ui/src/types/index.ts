@@ -69,8 +69,8 @@ export interface JobProgress {
 }
 
 export interface JobLog {
-  timestamp: number;
-  message: string;
+  logs: string[];
+  count: number;
 }
 
 export interface Job {
@@ -88,17 +88,11 @@ export interface Job {
   finishedOn?: number;
   failedReason?: string;
   progress?: JobProgress;
-  logs?: {
-    logs: JobLog[];
-    count: number;
-  };
+  logs?: JobLog;
 }
 
 export interface JobDetail extends Job {
-  logs: {
-    logs: JobLog[];
-    count: number;
-  };
+  logs: JobLog;
   returnvalue?: any;
 }
 
