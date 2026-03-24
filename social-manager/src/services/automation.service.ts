@@ -457,35 +457,96 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
 
     // Find comment input box
     // Facebook comment box selectors (multiple attempts for reliability)
+    // Enhanced with multi-language support including Vietnamese
     const commentSelectors = [
+      // Primary selectors - English
       'div[aria-label="Write a comment"]',
-      'div[contenteditable="true"][role="textbox"]',
+      'div[aria-label="Write a comment..."]',
+      'textarea[aria-label*="Write"]',
+      
+      // Multi-language aria-labels (Vietnamese, Spanish, French, etc.)
+      'div[aria-label*="Viết"]',  // Vietnamese: "Viết bình luận"
+      'div[aria-label*="bình luận"]',  // Vietnamese: "Viết bình luận"
+      'div[aria-label*="Escribir"]',  // Spanish: "Escribe un comentario"
+      'div[aria-label*="Écrire"]',  // French: "Écrire un commentaire"
+      'div[aria-label*="commentar"]',  // Portuguese/Spanish variants
+      'div[aria-label*="Schreib"]',  // German: "Schreib etwas..."
+      'div[aria-label*="komment"]',  // German/Dutch variants
+      
+      // Secondary selectors - contenteditable divs
+      'div[role="textbox"][contenteditable="true"]',
+      'div[contenteditable="true"][data-key*="comment"]',
+      
+      // Test ID and placeholder selectors (language-agnostic)
       'div[data-testid="comment-input"]',
+      'input[placeholder*="Write a comment"]',
       '[placeholder*="Write a comment"]',
+      'input[placeholder*="Viết"]',  // Vietnamese placeholder
+      'input[placeholder*="Escribir"]',  // Spanish placeholder
+      
+      // Alternative contenteditable selectors
+      'div[role="presentation"] div[contenteditable="true"]',
+      '[contenteditable="true"][role="textbox"]',
     ];
 
     let commentBox = null;
     for (const selector of commentSelectors) {
       try {
         const element = page.locator(selector).first();
+        // Wait for element to be attached to DOM
+        await element.waitFor({ state: 'attached', timeout: 5000 }).catch(() => null);
+        
         if (await element.isVisible({ timeout: 3000 })) {
           console.log(`[comment-action] Found comment box using selector: ${selector}`);
+          
+          // Ensure element is scrolled into view
+          await element.scrollIntoViewIfNeeded();
+          await behaviorEngine.waitWithVariance(500, 0.2);
+          
           commentBox = element;
           break;
         }
       } catch (err) {
         // Try next selector
+        console.debug(`[comment-action] Selector not found/visible: ${selector}`);
         continue;
       }
     }
 
     if (!commentBox) {
-      throw new Error('Could not find comment input box');
+      // Log diagnostic information for debugging
+      console.error('[comment-action] Could not find comment input box');
+      console.error('[comment-action] Current page URL:', postUrl);
+      console.error('[comment-action] Attempting fallback: searching for any contenteditable element...');
+      
+      // Fallback: Find ANY contenteditable element in the page
+      try {
+        const fallbackElement = page.locator('div[contenteditable="true"]').first();
+        await fallbackElement.waitFor({ state: 'attached', timeout: 3000 });
+        if (await fallbackElement.isVisible({ timeout: 2000 })) {
+          console.log('[comment-action] Found contenteditable element via fallback');
+          commentBox = fallbackElement;
+        }
+      } catch (err) {
+        // Still no luck
+      }
+      
+      if (!commentBox) {
+        throw new Error('Could not find comment input box');
+      }
     }
 
     // Click on comment box to focus
     await commentBox.click();
     await behaviorEngine.waitWithVariance(1000, 0.2);
+    
+    // Ensure focus is set by clicking again if needed
+    const isFocused = await page.evaluate(() => document.activeElement?.getAttribute('contenteditable') === 'true');
+    if (!isFocused) {
+      console.log('[comment-action] Ensuring focus on comment box...');
+      await commentBox.click({ force: true });
+      await behaviorEngine.waitWithVariance(500, 0.2);
+    }
 
     // Type comment with human-like typing
     console.log(`[comment-action] Typing comment...`);
@@ -498,17 +559,47 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
 
     // Find and click submit button
     const submitSelectors = [
+      // Primary selectors - English
       'div[aria-label="Comment"]:not([aria-label="Write a comment"])',
+      'button[aria-label="Post"]',
+      'button[aria-label="Comment"]',
+      
+      // Multi-language selectors
+      'button[aria-label*="Bình luận"]',  // Vietnamese: "Bình luận"
+      'button[aria-label*="Viết bình luận"]',  // Vietnamese alternative
+      'div[aria-label*="Bình luận"]',  // Vietnamese as div button
+      'button[aria-label*="Comentar"]',  // Spanish: "Comentar"
+      'button[aria-label*="Commenter"]',  // French: "Commenter"
+      'button[aria-label*="Kommentieren"]',  // German: "Kommentieren"
+      
+      // Secondary selectors
       'button[type="submit"]',
       'div[role="button"]:has-text("Comment")',
+      'div[role="button"]:has-text("Post")',
+      'div[role="button"]:has-text("Bình luận")',  // Vietnamese
+      'div[role="button"]:has-text("Comentar")',  // Spanish
+      
+      // Alternative selectors
+      '[data-testid="comment-submit"]',
+      'button:has-text("Post")',
+      'button:has-text("Comment")',
+      'button:has-text("Bình luận")',  // Vietnamese
+      'button:has-text("Comentar")',  // Spanish
+      
+      // Fallback: look for button near the comment box
+      'button[data-testid="comment_submit_button"]',
     ];
 
     let submitted = false;
     for (const selector of submitSelectors) {
       try {
         const submitBtn = page.locator(selector).first();
-        if (await submitBtn.isVisible({ timeout: 2000 })) {
+        await submitBtn.waitFor({ state: 'attached', timeout: 2000 }).catch(() => null);
+        
+        if (await submitBtn.isVisible({ timeout: 1500 })) {
           console.log(`[comment-action] Found submit button using selector: ${selector}`);
+          await submitBtn.scrollIntoViewIfNeeded();
+          await behaviorEngine.waitWithVariance(300, 0.2);
           await submitBtn.click();
           submitted = true;
           console.log('[comment-action] ✅ Comment submitted');
@@ -516,6 +607,7 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
         }
       } catch (err) {
         // Try next selector
+        console.debug(`[comment-action] Submit button selector not found: ${selector}`);
         continue;
       }
     }
@@ -523,9 +615,13 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
     // Fallback: Press Enter to submit
     if (!submitted) {
       console.log('[comment-action] Attempting to submit with Enter key...');
-      await commentBox.press('Enter');
-      submitted = true;
-      console.log('[comment-action] ✅ Comment submitted (Enter key)');
+      try {
+        await commentBox.press('Enter');
+        submitted = true;
+        console.log('[comment-action] ✅ Comment submitted (Enter key)');
+      } catch (err) {
+        console.error('[comment-action] Failed to submit with Enter key:', err);
+      }
     }
 
     // Post-action behavior (pause, optional scroll)
