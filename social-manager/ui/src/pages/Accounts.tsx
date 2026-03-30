@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { accountsApi, proxiesApi } from '../api';
 import type { Account, Proxy, CreateAccountPayload } from '../types';
-import { SessionStatusBadge } from '../components/SessionStatusBadge';
-import { SessionTimer } from '../components/SessionTimer';
 import './Accounts.css';
 
 export function Accounts() {
@@ -19,6 +17,7 @@ export function Accounts() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [accountEvents, setAccountEvents] = useState<Record<string, { behavior: string; status: 'idle' | 'processing' }>>({});
 
   useEffect(() => {
     loadData();
@@ -26,6 +25,22 @@ export function Accounts() {
     // Auto-refresh every 30 seconds to update session timers
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const evtSource = new EventSource('/api/accounts/events/stream');
+
+    evtSource.onmessage = (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'init') {
+        setAccountEvents(data.states ?? {});
+      } else if (data.type === 'update') {
+        const { accountId, behavior, status } = data;
+        setAccountEvents((prev) => ({ ...prev, [accountId]: { behavior, status } }));
+      }
+    };
+
+    return () => evtSource.close();
   }, []);
 
   async function loadData() {
@@ -168,34 +183,35 @@ export function Accounts() {
             <thead>
               <tr>
                 <th>Username</th>
-                <th>Session</th>
-                <th>Time Left</th>
-                <th>Last Login</th>
+                <th>Status</th>
+                <th>Behavior</th>
                 <th>Proxy</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {accounts.map((account) => (
-                <tr key={account.id}>
-                  <td><strong>{account.username}</strong></td>
-                  <td>
-                    <SessionStatusBadge status={account.sessionStatus} />
-                  </td>
-                  <td>
-                    <SessionTimer expiresAt={account.cookieExpiry} />
-                  </td>
-                  <td>
-                    {account.lastLoginAt
-                      ? new Date(account.lastLoginAt).toLocaleString()
-                      : '-'}
-                  </td>
-                  <td>{account.proxy ? `${account.proxy.host}:${account.proxy.port}` : '-'}</td>
-                  <td className="actions-cell">
-                    {renderSessionActions(account)}
-                  </td>
-                </tr>
-              ))}
+              {accounts.map((account) => {
+                const evt = accountEvents[account.id];
+                const status = evt?.status ?? 'idle';
+                const behavior = evt?.behavior ?? '';
+                return (
+                  <tr key={account.id}>
+                    <td><strong>{account.username}</strong></td>
+                    <td>
+                      <span className={`status-badge ${status}`}>
+                        {status === 'processing' ? 'Processing' : 'Idle'}
+                      </span>
+                    </td>
+                    <td className="behavior-cell">
+                      {behavior || <span className="behavior-empty">—</span>}
+                    </td>
+                    <td>{account.proxy ? `${account.proxy.host}:${account.proxy.port}` : '-'}</td>
+                    <td className="actions-cell">
+                      {renderSessionActions(account)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

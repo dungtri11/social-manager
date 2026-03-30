@@ -465,8 +465,8 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
       'textarea[aria-label*="Write"]',
       
       // Multi-language aria-labels (Vietnamese, Spanish, French, etc.)
-      'div[aria-label*="Viết"]',  // Vietnamese: "Viết bình luận"
-      'div[aria-label*="bình luận"]',  // Vietnamese: "Viết bình luận"
+      'div[aria-label*="Viết"][contenteditable="true"]',  // Vietnamese: "Viết bình luận"
+      'div[aria-label*="bình luận"][contenteditable="true"]',  // Vietnamese: "Viết bình luận"
       'div[aria-label*="Escribir"]',  // Spanish: "Escribe un comentario"
       'div[aria-label*="Écrire"]',  // French: "Écrire un commentaire"
       'div[aria-label*="commentar"]',  // Portuguese/Spanish variants
@@ -557,72 +557,11 @@ export async function commentPost(options: CommentPostOptions): Promise<CommentP
     // Wait after typing (user reviewing what they wrote)
     await behaviorEngine.waitWithVariance(1500, 0.3);
 
-    // Find and click submit button
-    const submitSelectors = [
-      // Primary selectors - English
-      'div[aria-label="Comment"]:not([aria-label="Write a comment"])',
-      'button[aria-label="Post"]',
-      'button[aria-label="Comment"]',
-      
-      // Multi-language selectors
-      'button[aria-label*="Bình luận"]',  // Vietnamese: "Bình luận"
-      'button[aria-label*="Viết bình luận"]',  // Vietnamese alternative
-      'div[aria-label*="Bình luận"]',  // Vietnamese as div button
-      'button[aria-label*="Comentar"]',  // Spanish: "Comentar"
-      'button[aria-label*="Commenter"]',  // French: "Commenter"
-      'button[aria-label*="Kommentieren"]',  // German: "Kommentieren"
-      
-      // Secondary selectors
-      'button[type="submit"]',
-      'div[role="button"]:has-text("Comment")',
-      'div[role="button"]:has-text("Post")',
-      'div[role="button"]:has-text("Bình luận")',  // Vietnamese
-      'div[role="button"]:has-text("Comentar")',  // Spanish
-      
-      // Alternative selectors
-      '[data-testid="comment-submit"]',
-      'button:has-text("Post")',
-      'button:has-text("Comment")',
-      'button:has-text("Bình luận")',  // Vietnamese
-      'button:has-text("Comentar")',  // Spanish
-      
-      // Fallback: look for button near the comment box
-      'button[data-testid="comment_submit_button"]',
-    ];
-
-    let submitted = false;
-    for (const selector of submitSelectors) {
-      try {
-        const submitBtn = page.locator(selector).first();
-        await submitBtn.waitFor({ state: 'attached', timeout: 2000 }).catch(() => null);
-        
-        if (await submitBtn.isVisible({ timeout: 1500 })) {
-          console.log(`[comment-action] Found submit button using selector: ${selector}`);
-          await submitBtn.scrollIntoViewIfNeeded();
-          await behaviorEngine.waitWithVariance(300, 0.2);
-          await submitBtn.click();
-          submitted = true;
-          console.log('[comment-action] ✅ Comment submitted');
-          break;
-        }
-      } catch (err) {
-        // Try next selector
-        console.debug(`[comment-action] Submit button selector not found: ${selector}`);
-        continue;
-      }
-    }
-
-    // Fallback: Press Enter to submit
-    if (!submitted) {
-      console.log('[comment-action] Attempting to submit with Enter key...');
-      try {
-        await commentBox.press('Enter');
-        submitted = true;
-        console.log('[comment-action] ✅ Comment submitted (Enter key)');
-      } catch (err) {
-        console.error('[comment-action] Failed to submit with Enter key:', err);
-      }
-    }
+    // Submit by pressing Enter (simulates natural user behaviour)
+    console.log('[comment-action] Submitting comment with Enter key...');
+    await commentBox.press('Enter');
+    const submitted = true;
+    console.log('[comment-action] ✅ Comment submitted (Enter key)');
 
     // Post-action behavior (pause, optional scroll)
     await behaviorEngine.postActionBehavior(page);

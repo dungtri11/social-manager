@@ -2,8 +2,31 @@ import { Router, Request, Response } from 'express';
 import { createAccount, getAccounts, deleteAccount, deleteExpiredAccounts } from '../services/account.service';
 import sessionService from '../services/session.service';
 import browserService from '../services/browser.service';
+import { behaviorEventsService, AccountBehaviorState } from '../services/behavior-events.service';
 
 const router = Router();
+
+// GET /accounts/events/stream - SSE stream for real-time behavior and status updates
+router.get('/events/stream', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Send initial snapshot of all known account states
+  const states = behaviorEventsService.getAllStates();
+  res.write(`data: ${JSON.stringify({ type: 'init', states })}\n\n`);
+
+  const onUpdate = (event: AccountBehaviorState) => {
+    res.write(`data: ${JSON.stringify({ type: 'update', ...event })}\n\n`);
+  };
+
+  behaviorEventsService.on('update', onUpdate);
+
+  req.on('close', () => {
+    behaviorEventsService.off('update', onUpdate);
+  });
+});
 
 // POST /accounts
 router.post('/', async (req: Request, res: Response) => {

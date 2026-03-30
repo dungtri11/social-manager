@@ -1,4 +1,6 @@
 import { Page } from 'playwright';
+import { behaviorContext } from '../lib/behavior-context';
+import { behaviorEventsService } from './behavior-events.service';
 
 /**
  * Behavior Engine - Simulates human-like behavior patterns
@@ -11,6 +13,16 @@ interface DelayRange {
 }
 
 class BehaviorEngine {
+  private log(message: string): void {
+    console.log(message);
+    const ctx = behaviorContext.getStore();
+    if (ctx?.accountId) {
+      // Strip the '[behavior] ' prefix for cleaner UI display
+      const display = message.replace(/^\[behavior\] /, '');
+      behaviorEventsService.emitBehavior(ctx.accountId, display);
+    }
+  }
+
   /**
    * Generate random delay with normal distribution (more realistic than uniform)
    * Most delays will be near the middle of the range
@@ -47,7 +59,7 @@ class BehaviorEngine {
     const scrolls = options?.scrolls || this.randomDelay(2, 5);
     const delayRange = options?.delayBetweenScrolls || { min: 800, max: 2000 };
 
-    console.log(`[behavior] Performing ${scrolls} random scrolls...`);
+    this.log(`[behavior] Performing ${scrolls} random scrolls...`);
 
     for (let i = 0; i < scrolls; i++) {
       // Random scroll amount (200-800 pixels)
@@ -62,7 +74,7 @@ class BehaviorEngine {
       await this.sleep(delay);
     }
 
-    console.log(`[behavior] Scroll complete`);
+    this.log(`[behavior] Scroll complete`);
   }
 
   /**
@@ -75,7 +87,7 @@ class BehaviorEngine {
     const movements = options?.movements || this.randomDelay(3, 6);
     const delayRange = options?.delayBetweenMoves || { min: 300, max: 800 };
 
-    console.log(`[behavior] Performing ${movements} random mouse movements...`);
+    this.log(`[behavior] Performing ${movements} random mouse movements...`);
 
     const viewport = page.viewportSize();
     if (!viewport) return;
@@ -91,7 +103,7 @@ class BehaviorEngine {
       await this.sleep(delay);
     }
 
-    console.log(`[behavior] Mouse movement complete`);
+    this.log(`[behavior] Mouse movement complete`);
   }
 
   /**
@@ -115,7 +127,7 @@ class BehaviorEngine {
       readingTimeMs + variance
     );
 
-    console.log(`[behavior] Simulating reading ${words} words (~${Math.round(actualTime / 1000)}s)...`);
+    this.log(`[behavior] Simulating reading ${words} words (~${Math.round(actualTime / 1000)}s)...`);
     await this.sleep(actualTime);
   }
 
@@ -126,7 +138,7 @@ class BehaviorEngine {
     const range = options || { min: 2000, max: 8000 };
     const delay = this.randomDelay(range.min, range.max);
 
-    console.log(`[behavior] Idle pause (${Math.round(delay / 1000)}s)...`);
+    this.log(`[behavior] Idle pause (${Math.round(delay / 1000)}s)...`);
     await this.sleep(delay);
   }
 
@@ -139,7 +151,7 @@ class BehaviorEngine {
     skipMouseMove?: boolean;
     skipReading?: boolean;
   }): Promise<void> {
-    console.log(`[behavior] Starting pre-action behavior sequence...`);
+    this.log(`[behavior] Starting pre-action behavior sequence...`);
 
     // Random scroll (unless skipped)
     if (!options?.skipScroll && Math.random() > 0.3) {
@@ -167,14 +179,14 @@ class BehaviorEngine {
     // Small pause before action
     await this.idlePause({ min: 1000, max: 3000 });
 
-    console.log(`[behavior] Pre-action behavior complete`);
+    this.log(`[behavior] Pre-action behavior complete`);
   }
 
   /**
    * Post-action behavior - Executes after performing an action
    */
   async postActionBehavior(page: Page): Promise<void> {
-    console.log(`[behavior] Starting post-action behavior sequence...`);
+    this.log(`[behavior] Starting post-action behavior sequence...`);
 
     // Small pause after action (user observing result)
     await this.idlePause({ min: 1500, max: 4000 });
@@ -187,14 +199,14 @@ class BehaviorEngine {
       });
     }
 
-    console.log(`[behavior] Post-action behavior complete`);
+    this.log(`[behavior] Post-action behavior complete`);
   }
 
   /**
    * Random page interaction (hover, click background, etc.)
    */
   async randomInteraction(page: Page): Promise<void> {
-    console.log(`[behavior] Performing random interaction...`);
+    this.log(`[behavior] Performing random interaction...`);
 
     const actions = [
       // Hover over random element
@@ -223,7 +235,7 @@ class BehaviorEngine {
     const action = actions[Math.floor(Math.random() * actions.length)];
     await action();
 
-    console.log(`[behavior] Random interaction complete`);
+    this.log(`[behavior] Random interaction complete`);
   }
 
   /**

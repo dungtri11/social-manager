@@ -139,3 +139,44 @@
   padding: 2rem;
   color: #666;
 }
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge.idle {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-badge.processing {
+  background: #eff6ff;
+  color: #2563eb;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Behavior column */
+.behavior-cell {
+  max-width: 280px;
+  font-size: 0.8rem;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.behavior-empty {
+  color: #9ca3af;
+}

@@ -1,5 +1,9 @@
 import 'dotenv/config';
 import WorkerService from './services/worker.service';
+import { behaviorEventsService } from './services/behavior-events.service';
+
+// Enable Redis publishing so behavior events reach the HTTP server process
+behaviorEventsService.initPublisher();
 
 const CONCURRENCY = process.env.WORKER_CONCURRENCY
   ? parseInt(process.env.WORKER_CONCURRENCY)

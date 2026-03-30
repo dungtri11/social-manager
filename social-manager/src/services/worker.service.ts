@@ -5,6 +5,8 @@ import { likePost, commentPost } from './automation.service';
 import riskControl from './risk.service';
 import executionGuard from '../guards/execution.guard';
 import identityService from './identity.service';
+import { behaviorContext } from '../lib/behavior-context';
+import { behaviorEventsService } from './behavior-events.service';
 
 class WorkerService {
   private worker: Worker<ActionJob>;
@@ -66,6 +68,18 @@ class WorkerService {
    */
   private async processJob(job: Job<ActionJob>): Promise<any> {
     const { accountId, actionType, targetUrl, payload } = job.data;
+
+    return behaviorContext.run({ accountId }, async () => {
+      behaviorEventsService.setStatus(accountId, 'processing');
+      try {
+        return await this.runJob(job, accountId, actionType, targetUrl, payload);
+      } finally {
+        behaviorEventsService.setStatus(accountId, 'idle');
+      }
+    });
+  }
+
+  private async runJob(job: Job<ActionJob>, accountId: string, actionType: ActionJob['actionType'], targetUrl: string, payload: Record<string, any> | undefined): Promise<any> {
 
     await job.updateProgress({ step: 'initializing', progress: 0 });
     await job.log(`Starting ${actionType} action for account ${accountId}`);
