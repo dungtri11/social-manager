@@ -5,6 +5,7 @@ export { jobsApi } from './jobs';
 export { batchApi } from './batch';
 export { riskApi } from './risk';
 export { identityApi } from './identity';
+export { schedulesApi } from './schedules';
 export type {
   IdentityProfile,
   IdentityBundle,

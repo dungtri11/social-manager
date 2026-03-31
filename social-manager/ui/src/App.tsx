@@ -6,6 +6,7 @@ import { Proxies } from './pages/Proxies';
 import { Actions } from './pages/Actions';
 import { Jobs } from './pages/Jobs';
 import { Identities } from './pages/Identities';
+import { Schedules } from './pages/Schedules';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="proxies" element={<Proxies />} />
           <Route path="actions" element={<Actions />} />
           <Route path="jobs" element={<Jobs />} />
+          <Route path="schedules" element={<Schedules />} />
           <Route path="identities" element={<Identities />} />
         </Route>
       </Routes>

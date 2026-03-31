@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { accountsApi, batchApi } from '../api';
-import type { Account, ActionType, BatchResult } from '../types';
+import { accountsApi, batchApi, schedulesApi } from '../api';
+import type { Account, ActionType, BatchResult, ScheduledAction } from '../types';
 import './Actions.css';
+
+type ExecutionMode = 'now' | 'schedule';
 
 export function Actions() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BatchResult | null>(null);
+  const [scheduleResult, setScheduleResult] = useState<ScheduledAction | null>(null);
 
+  const [executionMode, setExecutionMode] = useState<ExecutionMode>('now');
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [actionType, setActionType] = useState<ActionType>('like');
   const [targetUrl, setTargetUrl] = useState('');
@@ -16,6 +20,13 @@ export function Actions() {
   const [delayMin, setDelayMin] = useState(5000);
   const [delayMax, setDelayMax] = useState(15000);
   const [submitting, setSubmitting] = useState(false);
+
+  // Schedule-specific fields
+  const [scheduleName, setScheduleName] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [repeatType, setRepeatType] = useState<'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'>('ONCE');
+  const [maxRuns, setMaxRuns] = useState<number | ''>('');
 
   useEffect(() => {
     loadAccounts();
@@ -60,23 +71,54 @@ export function Actions() {
     setSubmitting(true);
     setError(null);
     setResult(null);
+    setScheduleResult(null);
 
     try {
       const payload = actionType === 'comment' && commentText
         ? { commentTemplate: commentText }
         : undefined;
 
-      const res = await batchApi.execute({
-        accountIds: selectedAccounts,
-        actionType,
-        targetUrl,
-        payload,
-        delayBetweenAccounts: {
-          min: delayMin,
-          max: delayMax,
-        },
-      });
-      setResult(res);
+      if (executionMode === 'now') {
+        const res = await batchApi.execute({
+          accountIds: selectedAccounts,
+          actionType,
+          targetUrl,
+          payload,
+          delayBetweenAccounts: {
+            min: delayMin,
+            max: delayMax,
+          },
+        });
+        setResult(res);
+      } else {
+        // Schedule mode
+        if (!scheduleName) {
+          setError('Schedule name is required');
+          setSubmitting(false);
+          return;
+        }
+        if (!scheduleDate || !scheduleTime) {
+          setError('Schedule date and time are required');
+          setSubmitting(false);
+          return;
+        }
+
+        const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+
+        const res = await schedulesApi.create({
+          name: scheduleName,
+          accountIds: selectedAccounts,
+          actionType,
+          targetUrl,
+          payload,
+          repeat: repeatType,
+          scheduledAt,
+          maxRuns: maxRuns !== '' ? maxRuns : undefined,
+          delayMin,
+          delayMax,
+        });
+        setScheduleResult(res);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to execute action');
     } finally {
@@ -88,7 +130,7 @@ export function Actions() {
 
   return (
     <div className="actions-page">
-      <h1>Execute Actions</h1>
+      <h1>Actions</h1>
 
       {error && <div className="error-banner">{error}</div>}
       {result && (
@@ -97,6 +139,31 @@ export function Actions() {
           {result.skipped > 0 && ` (${result.skipped} skipped due to risk)`}
         </div>
       )}
+      {scheduleResult && (
+        <div className="success-banner">
+          Schedule "{scheduleResult.name}" created! Scheduled for{' '}
+          {new Date(scheduleResult.scheduledAt).toLocaleString()}
+          {scheduleResult.repeat !== 'ONCE' && ` (repeats ${scheduleResult.repeat.toLowerCase()})`}
+        </div>
+      )}
+
+      {/* Execution Mode Tabs */}
+      <div className="execution-mode-tabs">
+        <button
+          className={`mode-tab ${executionMode === 'now' ? 'active' : ''}`}
+          onClick={() => setExecutionMode('now')}
+          type="button"
+        >
+          Execute Now
+        </button>
+        <button
+          className={`mode-tab ${executionMode === 'schedule' ? 'active' : ''}`}
+          onClick={() => setExecutionMode('schedule')}
+          type="button"
+        >
+          Schedule
+        </button>
+      </div>
 
       <form className="action-form" onSubmit={handleSubmit}>
         <div className="form-section">
@@ -164,8 +231,71 @@ export function Actions() {
           )}
         </div>
 
+        {/* Schedule-specific settings */}
+        {executionMode === 'schedule' && (
+          <div className="form-section">
+            <h3>3. Schedule Settings</h3>
+            <div className="form-group">
+              <label>Schedule Name *</label>
+              <input
+                type="text"
+                value={scheduleName}
+                onChange={(e) => setScheduleName(e.target.value)}
+                placeholder="e.g. Daily like campaign"
+                required
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Date *</label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Time *</label>
+                <input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Repeat</label>
+                <select
+                  value={repeatType}
+                  onChange={(e) => setRepeatType(e.target.value as typeof repeatType)}
+                >
+                  <option value="ONCE">Once</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                </select>
+              </div>
+              {repeatType !== 'ONCE' && (
+                <div className="form-group">
+                  <label>Max Runs (empty = unlimited)</label>
+                  <input
+                    type="number"
+                    value={maxRuns}
+                    onChange={(e) => setMaxRuns(e.target.value ? parseInt(e.target.value) : '')}
+                    min={1}
+                    placeholder="Unlimited"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="form-section">
-          <h3>3. Delay Settings</h3>
+          <h3>{executionMode === 'schedule' ? '4' : '3'}. Delay Settings</h3>
           <div className="form-row">
             <div className="form-group">
               <label>Min Delay (ms)</label>
@@ -189,7 +319,12 @@ export function Actions() {
         </div>
 
         <button type="submit" className="btn primary large" disabled={submitting}>
-          {submitting ? 'Executing...' : `Execute ${actionType.toUpperCase()} on ${selectedAccounts.length} accounts`}
+          {submitting
+            ? (executionMode === 'now' ? 'Executing...' : 'Scheduling...')
+            : executionMode === 'now'
+              ? `Execute ${actionType.toUpperCase()} on ${selectedAccounts.length} accounts`
+              : `Schedule ${actionType.toUpperCase()} for ${selectedAccounts.length} accounts`
+          }
         </button>
       </form>
     </div>

@@ -235,3 +235,43 @@ export interface ExecutionGuardResult {
   reasons: string[];
   identity: any | null;
 }
+
+// Schedule types
+export type ScheduleStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'FAILED';
+export type ScheduleRepeat = 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+
+export interface ScheduledAction {
+  id: string;
+  name: string;
+  accountIds: string[];
+  actionType: ActionType;
+  targetUrl: string;
+  payload?: Record<string, unknown>;
+  status: ScheduleStatus;
+  repeat: ScheduleRepeat;
+  cronExpr?: string;
+  scheduledAt: string;
+  lastRunAt: string | null;
+  runCount: number;
+  maxRuns: number | null;
+  delayMin: number;
+  delayMax: number;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSchedulePayload {
+  name: string;
+  accountIds: string[];
+  actionType: ActionType;
+  targetUrl: string;
+  payload?: Record<string, unknown>;
+  repeat: ScheduleRepeat;
+  cronExpr?: string;
+  scheduledAt: string;
+  maxRuns?: number;
+  delayMin?: number;
+  delayMax?: number;
+  timezone?: string;
+}

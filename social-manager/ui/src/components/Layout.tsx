@@ -13,6 +13,7 @@ export function Layout() {
           <NavLink to="/accounts">Accounts</NavLink>
           <NavLink to="/proxies">Proxies</NavLink>
           <NavLink to="/actions">Actions</NavLink>
+          <NavLink to="/schedules">Schedules</NavLink>
           <NavLink to="/jobs">Jobs</NavLink>
           <NavLink to="/identities">Identities</NavLink>
         </nav>
